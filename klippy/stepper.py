@@ -138,9 +138,15 @@ class MCU_stepper:
     def get_commanded_position(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         return ffi_lib.itersolve_get_commanded_pos(self._stepper_kinematics)
+    
     def get_mcu_position(self):
+        logging.info(self._name)
         mcu_pos_dist = self.get_commanded_position() + self._mcu_position_offset
+        logging.info(mcu_pos_dist)
+        logging.info(self.get_commanded_position())
+        logging.info(self._step_dist)
         mcu_pos = mcu_pos_dist / self._step_dist
+        logging.info(mcu_pos)
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
@@ -303,6 +309,7 @@ class PrinterRail:
         self.endstop_map = {}
         self.add_extra_stepper(config)
         mcu_stepper = self.steppers[0]
+        self.endstop_pin = config.get('endstop_pin')
         self.get_name = mcu_stepper.get_name
         self.get_commanded_position = mcu_stepper.get_commanded_position
         self.calc_position_from_coord = mcu_stepper.calc_position_from_coord

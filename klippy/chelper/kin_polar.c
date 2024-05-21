@@ -11,12 +11,16 @@
 #include "itersolve.h" // struct stepper_kinematics
 #include "trapq.h" // move_get_coord
 
+#define PI 3.14159265358979323846F
+#define ARM_LENGHT 126.0f
+
+
 static double
 polar_stepper_radius_calc_position(struct stepper_kinematics *sk, struct move *m
                                    , double move_time)
 {
     struct coord c = move_get_coord(m, move_time);
-    return sqrt(c.x*c.x + c.y*c.y);
+    return 2 * asinf(sqrtf(c.x*c.x+c.y*c.y) / (2 * ARM_LENGHT) );
 }
 
 static double
@@ -24,12 +28,13 @@ polar_stepper_angle_calc_position(struct stepper_kinematics *sk, struct move *m
                                   , double move_time)
 {
     struct coord c = move_get_coord(m, move_time);
+    float theta1 = polar_stepper_radius_calc_position(sk, m, move_time);
     // XXX - handle x==y==0
-    double angle = atan2(c.y, c.x);
-    if (angle - sk->commanded_pos > M_PI)
-        angle -= 2. * M_PI;
-    else if (angle - sk->commanded_pos < -M_PI)
-        angle += 2. * M_PI;
+    double angle = (PI-theta1)/2 - atan2f(c.y,c.x);
+    if (angle - sk->commanded_pos > PI)
+        angle -= 2. * PI;
+    else if (angle - sk->commanded_pos < -PI)
+        angle += 2. * PI;
     return angle;
 }
 
@@ -37,10 +42,10 @@ static void
 polar_stepper_angle_post_fixup(struct stepper_kinematics *sk)
 {
     // Normalize the stepper_bed angle
-    if (sk->commanded_pos < -M_PI)
-        sk->commanded_pos += 2 * M_PI;
-    else if (sk->commanded_pos > M_PI)
-        sk->commanded_pos -= 2 * M_PI;
+    if (sk->commanded_pos < -PI)
+        sk->commanded_pos += 2 * PI;
+    else if (sk->commanded_pos > PI)
+        sk->commanded_pos -= 2 * PI;
 }
 
 struct stepper_kinematics * __visible
